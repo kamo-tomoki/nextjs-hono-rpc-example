@@ -1,35 +1,29 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import client from "../hono/client";
 import styles from "./page.module.css";
 
 export default function Home() {
-	const [message1, setMessage1] = useState("");
-	const [message2, setMessage2] = useState("");
+	const getData = async () => {
+		const res = await client.api.a.$get();
+		return await res.json();
+	};
 
-	useEffect(() => {
-		const getData = async () => {
-			const res = await client.api.a.$get();
-			const data = await res.json();
-			data.message && setMessage1(data.message);
-		};
+	const postData = async () => {
+		const res = await client.api.b.$post({ form: { user: "John" } });
+		return await res.json();
+	};
 
-		const postData = async () => {
-			const res = await client.api.b.$post({ form: { user: "John" } });
-			const data = await res.json();
-			data.message && setMessage2(data.message);
-		};
-
-		getData();
-		postData();
-	}, []);
+	const getQuery = useQuery({ queryKey: ["getQuery"], queryFn: getData });
+	const postQuery = useQuery({ queryKey: ["postQuery"], queryFn: postData });
 
 	return (
 		<main className={styles.main}>
 			<h1>Next.js + Hono + Zod + Biome!</h1>
-			<p>{message1}</p>
-			<p>{message2}</p>
+			{(getQuery.isLoading || postQuery.isLoading) && <p>Loading...</p>}
+			<p>{getQuery.data?.message}</p>
+			<p>{postQuery.data?.message}</p>
 		</main>
 	);
 }
